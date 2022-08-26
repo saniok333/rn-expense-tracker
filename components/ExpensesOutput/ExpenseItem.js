@@ -9,6 +9,7 @@ const ExpenseItem = ({ id, description, amount, date }) => {
   const expensePressHandler = () => {
     navigation.navigate('ManageExpense', { expenseId: id });
   };
+
   return (
     <Pressable
       onPress={expensePressHandler}

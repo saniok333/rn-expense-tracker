@@ -8,8 +8,6 @@ import { fetchExpenses } from '../util/http';
 const RecentExpenses = () => {
   const { expenses, setExpenses } = useContext(ExpensesContext);
 
-  console.log(expenses);
-
   useEffect(() => {
     const getExpenses = async () => {
       const fetchedExpenses = await fetchExpenses();
