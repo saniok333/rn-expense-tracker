@@ -4,12 +4,14 @@ import { StyleSheet, View } from 'react-native';
 import ExpenseForm from '../components/ManageExpense/ExpenseForm';
 import IconButton from '../components/UI/IconButton';
 import LoadingOverlay from '../components/UI/LoadingOverlay';
+import ErrorOverlay from '../components/UI/ErrorOverlay';
 import { GlobalStyles } from '../constants/styles';
 import { ExpensesContext } from '../store/expenses-context';
 import { deleteFBExpense, storeExpense, updateFBExpense } from '../util/http';
 
 const ManageExpense = ({ route, navigation }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState();
   const editedExpenseId = route.params?.expenseId;
   const isEditing = !!editedExpenseId;
 
@@ -28,9 +30,14 @@ const ManageExpense = ({ route, navigation }) => {
 
   const deleteExpenseHandler = async () => {
     setIsSubmitting(true);
-    await deleteFBExpense(editedExpenseId);
-    deleteExpense(editedExpenseId);
-    navigation.goBack();
+    try {
+      await deleteFBExpense(editedExpenseId);
+      deleteExpense(editedExpenseId);
+      navigation.goBack();
+    } catch (error) {
+      setError('Could not delete expense!');
+      setIsSubmitting(false);
+    }
   };
 
   const cancelHandler = () => {
@@ -39,15 +46,30 @@ const ManageExpense = ({ route, navigation }) => {
 
   const confirmHandler = async (expenseData) => {
     setIsSubmitting(true);
-    if (isEditing) {
-      updateExpense(editedExpenseId, expenseData);
-      await updateFBExpense(editedExpenseId, expenseData);
-    } else {
-      const id = await storeExpense(expenseData);
-      addExpense({ ...expenseData, id });
+    try {
+      if (isEditing) {
+        await updateFBExpense(editedExpenseId, expenseData);
+        updateExpense(editedExpenseId, expenseData);
+      } else {
+        const id = await storeExpense(expenseData);
+        addExpense({ ...expenseData, id });
+      }
+      navigation.goBack();
+    } catch (error) {
+      setError(
+        isEditing ? 'Could not update expense!' : 'Could not add expense!'
+      );
+      setIsSubmitting(false);
     }
-    navigation.goBack();
   };
+
+  const errorHandler = () => {
+    setError(null);
+  };
+
+  if (error && !isSubmitting) {
+    return <ErrorOverlay message={error} onConfirm={errorHandler} />;
+  }
 
   if (isSubmitting) {
     return <LoadingOverlay />;
